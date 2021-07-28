@@ -1,11 +1,15 @@
 package main
 
-import (
-	"fmt"
-	"time"
+import "fmt"
+
+const (
+	rsa   int = iota // 0
+	esc       = 2    // 2
+	ecdsa            // 2
 )
 
 func main() {
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Println(timestamp)
+	fmt.Println(rsa)
+	fmt.Println(esc)
+	fmt.Println(ecdsa)
 }
