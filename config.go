@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -76,32 +75,9 @@ func getDefaultConfig() *config {
 	return cfg
 }
 
-type keySignature int
-
-/*const (
-	rsa_key keySignature = iota
-	ecdsa_key
-	ed25519_key
-)*/
-const rsa_key keySignature = iota
-
-func (signature keySignature) String() string {
-	/*switch signature {
-	case rsa_key:
-		return "rsa"
-	case ecdsa_key:
-		return "ecdsa"
-	case ed25519_key:
-		return "ed25519"
-	default:
-		return "unknown"
-	}*/
-	return "rsa"
-}
-
 // 生成密钥
-func generateKey(dataDir string, signature keySignature) (string, error) {
-	keyFile := path.Join(dataDir, fmt.Sprintf("host_%v_key", signature))
+func generateKey(dataDir string) (string, error) {
+	keyFile := path.Join(dataDir, "host_rsa_key")
 	if _, err := os.Stat(keyFile); err == nil {
 		return keyFile, nil
 	} else if !os.IsNotExist(err) {
@@ -115,15 +91,7 @@ func generateKey(dataDir string, signature keySignature) (string, error) {
 	}
 	var key interface{}
 	err := errors.New("unsupported key type")
-	/*switch signature {
-	case rsa_key:
-		key, err = rsa.GenerateKey(rand.Reader, 3072)
-	case ecdsa_key:
-		key, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	case ed25519_key:
-		_, key, err = ed25519.GenerateKey(rand.Reader)
-	}*/
-
+	// 调用rsa的GenerateKey方法产生密钥
 	key, err = rsa.GenerateKey(rand.Reader, 3072)
 	if err != nil {
 		return "", err
@@ -142,6 +110,7 @@ func generateKey(dataDir string, signature keySignature) (string, error) {
 	return keyFile, nil
 }
 
+// 加载密钥
 func loadKey(keyFile string) (ssh.Signer, error) {
 	keyBytes, err := ioutil.ReadFile(keyFile)
 	if err != nil {
@@ -150,14 +119,13 @@ func loadKey(keyFile string) (ssh.Signer, error) {
 	return ssh.ParsePrivateKey(keyBytes)
 }
 
-func (cfg *config) setDefaultHostKeys(dataDir string, signatures []keySignature) error {
-	for _, signature := range signatures {
-		keyFile, err := generateKey(dataDir, signature)
-		if err != nil {
-			return err
-		}
-		cfg.Server.HostKeys = append(cfg.Server.HostKeys, keyFile)
+// 设置默认的主机密钥
+func (cfg *config) setDefaultHostKeys(dataDir string) error {
+	keyFile, err := generateKey(dataDir)
+	if err != nil {
+		return nil
 	}
+	cfg.Server.HostKeys = append(cfg.Server.HostKeys, keyFile)
 	return nil
 }
 
@@ -172,6 +140,7 @@ func (cfg *config) parseHostKeys() error {
 	return nil
 }
 
+// 获取ssh 配置文件
 func (cfg *config) setupSSHConfig() error {
 	sshConfig := &ssh.ServerConfig{
 		NoClientAuth:      cfg.Auth.NoAuth,
@@ -191,6 +160,7 @@ func (cfg *config) setupSSHConfig() error {
 	return nil
 }
 
+// 设置日志文件
 func (cfg *config) setupLogging() error {
 	if cfg.logFileHandle != nil {
 		cfg.logFileHandle.Close()
@@ -225,10 +195,7 @@ func getConfig(configString string, dataDir string) (*config, error) {
 	if len(cfg.Server.HostKeys) == 0 {
 		infoLogger.Printf("No host keys configured, using keys at %q", dataDir)
 		// 设置默认密钥
-		/*if err := cfg.setDefaultHostKeys(dataDir, []keySignature{rsa_key, ecdsa_key, ed25519_key}); err != nil {
-			return nil, err
-		}*/
-		if err := cfg.setDefaultHostKeys(dataDir, []keySignature{rsa_key}); err != nil {
+		if err := cfg.setDefaultHostKeys(dataDir); err != nil {
 			return nil, err
 		}
 	}
