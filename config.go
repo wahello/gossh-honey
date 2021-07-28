@@ -1,6 +1,9 @@
 package main
 
 import (
+	"golang.org/x/crypto/ssh"
+	"gopkg.in/yaml.v2"
+
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -15,16 +18,15 @@ import (
 	"log"
 	"os"
 	"path"
-
-	"golang.org/x/crypto/ssh"
-	"gopkg.in/yaml.v2"
 )
 
+// server 配置文件 对应yaml文件中的server
 type serverConfig struct {
 	ListenAddress string   `yaml:"listen_address"`
 	HostKeys      []string `yaml:"host_keys"`
 }
 
+// 日志配置文件 对应yaml文件中的logging
 type loggingConfig struct {
 	File       string `yaml:"file"`
 	JSON       bool   `yaml:"json"`
@@ -32,39 +34,27 @@ type loggingConfig struct {
 	Debug      bool   `yaml:"debug"`
 }
 
+// 认证配置文件 对应yaml文件中的auth
+type authConfig struct {
+	MaxTries      int              `yaml:"max_tries"`
+	NoAuth        bool             `yaml:"no_auth"`
+	PasswordAuth  commonAuthConfig `yaml:"password_auth"`
+	PublicKeyAuth commonAuthConfig `yaml:"public_key_auth"`
+}
+
+// 认证的两种情况
 type commonAuthConfig struct {
 	Enabled  bool `yaml:"enabled"`
 	Accepted bool `yaml:"accepted"`
 }
 
-type keyboardInteractiveAuthQuestion struct {
-	Text string `yaml:"text"`
-	Echo bool   `yaml:"echo"`
-}
-
-type keyboardInteractiveAuthConfig struct {
-	commonAuthConfig `yaml:",inline"`
-	Instruction      string                            `yaml:"instruction"`
-	Questions        []keyboardInteractiveAuthQuestion `yaml:"questions"`
-}
-
-type authConfig struct {
-	MaxTries                int                           `yaml:"max_tries"`
-	NoAuth                  bool                          `yaml:"no_auth"`
-	PasswordAuth            commonAuthConfig              `yaml:"password_auth"`
-	PublicKeyAuth           commonAuthConfig              `yaml:"public_key_auth"`
-	KeyboardInteractiveAuth keyboardInteractiveAuthConfig `yaml:"keyboard_interactive_auth"`
-}
-
+// ssh 协议的配置文件 对应yaml文件中的ssh_proto
 type sshProtoConfig struct {
-	Version        string   `yaml:"version"`
-	Banner         string   `yaml:"banner"`
-	RekeyThreshold uint64   `yaml:"rekey_threshold"`
-	KeyExchanges   []string `yaml:"key_exchanges"`
-	Ciphers        []string `yaml:"ciphers"`
-	MACs           []string `yaml:"macs"`
+	Version string `yaml:"version"`
+	Banner  string `yaml:"banner"`
 }
 
+// 整个ssh的配置
 type config struct {
 	Server   serverConfig   `yaml:"server"`
 	Logging  loggingConfig  `yaml:"logging"`
@@ -177,20 +167,12 @@ func (cfg *config) parseHostKeys() error {
 
 func (cfg *config) setupSSHConfig() error {
 	sshConfig := &ssh.ServerConfig{
-		Config: ssh.Config{
-			RekeyThreshold: cfg.SSHProto.RekeyThreshold,
-			KeyExchanges:   cfg.SSHProto.KeyExchanges,
-			Ciphers:        cfg.SSHProto.Ciphers,
-			MACs:           cfg.SSHProto.MACs,
-		},
-		NoClientAuth:                cfg.Auth.NoAuth,
-		MaxAuthTries:                cfg.Auth.MaxTries,
-		PasswordCallback:            cfg.getPasswordCallback(),
-		PublicKeyCallback:           cfg.getPublicKeyCallback(),
-		KeyboardInteractiveCallback: cfg.getKeyboardInteractiveCallback(),
-		AuthLogCallback:             cfg.getAuthLogCallback(),
-		ServerVersion:               cfg.SSHProto.Version,
-		BannerCallback:              cfg.getBannerCallback(),
+		NoClientAuth:      cfg.Auth.NoAuth,
+		MaxAuthTries:      cfg.Auth.MaxTries,
+		PasswordCallback:  cfg.getPasswordCallback(),
+		PublicKeyCallback: cfg.getPublicKeyCallback(),
+		ServerVersion:     cfg.SSHProto.Version,
+		BannerCallback:    cfg.getBannerCallback(),
 	}
 	if err := cfg.parseHostKeys(); err != nil {
 		return err
@@ -239,9 +221,12 @@ func getConfig(configString string, dataDir string) (*config, error) {
 		}
 	}
 
+	// 设置配置文件
 	if err := cfg.setupSSHConfig(); err != nil {
 		return nil, err
 	}
+
+	// 设置日志文件
 	if err := cfg.setupLogging(); err != nil {
 		return nil, err
 	}

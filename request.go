@@ -1,12 +1,12 @@
 package main
 
 import (
+	"golang.org/x/crypto/ssh"
+
 	"errors"
 	"math/rand"
 	"net"
 	"strconv"
-
-	"golang.org/x/crypto/ssh"
 )
 
 type globalRequestPayload interface {

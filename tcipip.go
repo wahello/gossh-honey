@@ -1,14 +1,14 @@
 package main
 
 import (
+	"golang.org/x/crypto/ssh"
+
 	"bufio"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
-
-	"golang.org/x/crypto/ssh"
 )
 
 type tcpipServer interface {

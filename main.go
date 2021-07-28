@@ -37,11 +37,13 @@ func main() {
 		configString = string(configBytes)
 	}
 
+	// 获取配置文件
 	cfg, err := getConfig(configString, *dataDir)
 	if err != nil {
 		errorLogger.Fatalf("Failed to get config: %v", err)
 	}
 
+	// -- 监听
 	listener, err := net.Listen("tcp", cfg.Server.ListenAddress)
 	if err != nil {
 		errorLogger.Fatalf("Failed to listen for connections: %v", err)

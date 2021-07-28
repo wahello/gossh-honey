@@ -1,13 +1,13 @@
 package main
 
 import (
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/term"
+
 	"bufio"
 	"errors"
 	"io"
 	"strings"
-
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/term"
 )
 
 type ptyRequest struct {

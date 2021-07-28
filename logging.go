@@ -27,22 +27,12 @@ type authLog struct {
 	Accepted authAccepted `json:"accepted"`
 }
 
-type noAuthLog struct {
-	authLog
-}
-
-func (entry noAuthLog) String() string {
-	return fmt.Sprintf("authentication for user %q without credentials %v", entry.User, entry.Accepted)
-}
-func (entry noAuthLog) eventType() string {
-	return "no_auth"
-}
-
 type passwordAuthLog struct {
 	authLog
 	Password string `json:"password"`
 }
 
+// 密码认证日志输出 authentication for user "root" with password "test" accepted
 func (entry passwordAuthLog) String() string {
 	return fmt.Sprintf("authentication for user %q with password %q %v", entry.User, entry.Password, entry.Accepted)
 }

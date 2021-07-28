@@ -1,10 +1,10 @@
 package main
 
 import (
+	"golang.org/x/crypto/ssh"
+
 	"net"
 	"sync"
-
-	"golang.org/x/crypto/ssh"
 )
 
 type connContext struct {
