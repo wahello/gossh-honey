@@ -1,89 +1,61 @@
 package main
 
 import (
-	"errors"
-	"golang.org/x/crypto/ssh"
-	"net"
+	"github.com/adrg/xdg"
 
-	"encoding/json"
-	"fmt"
+	"flag"
 	"io/ioutil"
 	"log"
-	"path/filepath"
-	"strconv"
+	"net"
+	"os"
+	"path"
 )
 
-// ConfigInstance 对应配置文件的结构体
-type ConfigInstance struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
-	Command  string `json:"command"`
-	Port     int    `json:"port"`
-}
+var (
+	infoLogger    *log.Logger
+	warningLogger *log.Logger
+	errorLogger   *log.Logger
+)
 
-var configInstance ConfigInstance
+func init() {
+	infoLogger = log.New(os.Stderr, "INFO ", log.LstdFlags)
+	warningLogger = log.New(os.Stderr, "WARNING ", log.LstdFlags)
+	errorLogger = log.New(os.Stderr, "ERROR ", log.LstdFlags)
+}
 
 func main() {
-	// 配置文件初始化
-	InitConfig()
+	configFile := flag.String("config", "", "config file")
+	dataDir := flag.String("data_dir", path.Join(xdg.DataHome, "hostkeys"), "data directory")
+	flag.Parse()
 
-	// SSH 服务端
-	config := ssh.ServerConfig{
-		PasswordCallback: func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
-			// 验证用户名和密码是否正确
-			if conn.User() == configInstance.Name && string(password) == configInstance.Password {
-				log.Println("Login successful. username:", conn.User(), "address:", conn.RemoteAddr().String())
-				return nil, nil
-			} else {
-				log.Println("Login failed. username:", conn.User(), "password:", string(password), "address:", conn.RemoteAddr().String())
-				return nil, errors.New("Unknow username or password")
-			}
-		},
-	}
-
-	privateBytes, err := ioutil.ReadFile("id_rsa")
-	if err != nil {
-		log.Fatal("Failed to load private key:", err)
-	}
-
-	privateKey, err := ssh.ParsePrivateKey(privateBytes)
-	if err != nil {
-		log.Fatal("Failed to parse private key:", err)
-	}
-
-	// 添加主机密钥
-	config.AddHostKey(privateKey)
-
-	listener, err := net.Listen("tcp", "0.0.0.0:"+strconv.Itoa(configInstance.Port))
-	if err != nil {
-		log.Fatal("failed to listen for connection:", err)
-	}
-	nConn, _ := listener.Accept()
-
-	_, _, _, err = ssh.NewServerConn(nConn, &config)
-	if err != nil {
-		fmt.Printf("error is: %v", err)
-	}
-
-}
-
-// InitConfig 初始化配置的操作
-func InitConfig() {
-	// 根据路径读取配置文件信息
-	if contents, err := ioutil.ReadFile(filepath.Join("config", "config.json")); err == nil {
-		log.Println("Load config:", filepath.Join("config", "config.json"))
-
-		err := json.Unmarshal(contents, &configInstance)
+	configString := ""
+	if *configFile != "" {
+		configBytes, err := ioutil.ReadFile(*configFile)
 		if err != nil {
-			log.Println("Load config error:", err)
-			panic(err)
+			errorLogger.Fatalf("Failed to read config file: %v", err)
 		}
-	} else {
-		if err != nil {
-			log.Println("Load config error:")
-			panic(err)
-		}
+		configString = string(configBytes)
 	}
-	log.Println("[Config] Username:", configInstance.Name)
-	log.Println("[Config] Port:", configInstance.Port)
+
+	cfg, err := getConfig(configString, *dataDir)
+	if err != nil {
+		errorLogger.Fatalf("Failed to get config: %v", err)
+	}
+
+	listener, err := net.Listen("tcp", cfg.Server.ListenAddress)
+	if err != nil {
+		errorLogger.Fatalf("Failed to listen for connections: %v", err)
+	}
+	defer listener.Close()
+
+	infoLogger.Printf("Listening on %v", listener.Addr())
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			warningLogger.Printf("Failed to accept connection: %v", err)
+			continue
+		}
+		go handleConnection(conn, cfg)
+	}
 }
