@@ -4,9 +4,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v2"
 
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -66,6 +63,7 @@ type config struct {
 	logFileHandle  io.WriteCloser
 }
 
+// 默认配置文件
 func getDefaultConfig() *config {
 	cfg := &config{}
 	cfg.Server.ListenAddress = "127.0.0.1:2222"
@@ -80,14 +78,15 @@ func getDefaultConfig() *config {
 
 type keySignature int
 
-const (
+/*const (
 	rsa_key keySignature = iota
 	ecdsa_key
 	ed25519_key
-)
+)*/
+const rsa_key keySignature = iota
 
 func (signature keySignature) String() string {
-	switch signature {
+	/*switch signature {
 	case rsa_key:
 		return "rsa"
 	case ecdsa_key:
@@ -96,9 +95,11 @@ func (signature keySignature) String() string {
 		return "ed25519"
 	default:
 		return "unknown"
-	}
+	}*/
+	return "rsa"
 }
 
+// 生成密钥
 func generateKey(dataDir string, signature keySignature) (string, error) {
 	keyFile := path.Join(dataDir, fmt.Sprintf("host_%v_key", signature))
 	if _, err := os.Stat(keyFile); err == nil {
@@ -114,14 +115,20 @@ func generateKey(dataDir string, signature keySignature) (string, error) {
 	}
 	var key interface{}
 	err := errors.New("unsupported key type")
-	switch signature {
+	/*switch signature {
 	case rsa_key:
 		key, err = rsa.GenerateKey(rand.Reader, 3072)
 	case ecdsa_key:
 		key, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	case ed25519_key:
 		_, key, err = ed25519.GenerateKey(rand.Reader)
+	}*/
+
+	key, err = rsa.GenerateKey(rand.Reader, 3072)
+	if err != nil {
+		return "", err
 	}
+
 	if err != nil {
 		return "", err
 	}
@@ -207,6 +214,7 @@ func (cfg *config) setupLogging() error {
 	return nil
 }
 
+// 获取配置文件
 func getConfig(configString string, dataDir string) (*config, error) {
 	cfg := getDefaultConfig()
 
@@ -216,7 +224,11 @@ func getConfig(configString string, dataDir string) (*config, error) {
 
 	if len(cfg.Server.HostKeys) == 0 {
 		infoLogger.Printf("No host keys configured, using keys at %q", dataDir)
-		if err := cfg.setDefaultHostKeys(dataDir, []keySignature{rsa_key, ecdsa_key, ed25519_key}); err != nil {
+		// 设置默认密钥
+		/*if err := cfg.setDefaultHostKeys(dataDir, []keySignature{rsa_key, ecdsa_key, ed25519_key}); err != nil {
+			return nil, err
+		}*/
+		if err := cfg.setDefaultHostKeys(dataDir, []keySignature{rsa_key}); err != nil {
 			return nil, err
 		}
 	}
