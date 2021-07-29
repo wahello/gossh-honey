@@ -1,11 +1,12 @@
 package main
 
 import (
+	"golang.org/x/crypto/ssh"
+
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"log"
 	"os"

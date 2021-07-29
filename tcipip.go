@@ -2,10 +2,10 @@ package main
 
 import (
 	"golang.org/x/crypto/ssh"
-	"log"
 
 	"bufio"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"

@@ -3,11 +3,11 @@ package main
 import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
-	"log"
 
 	"bufio"
 	"errors"
 	"io"
+	"log"
 	"strings"
 )
 
