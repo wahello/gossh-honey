@@ -31,6 +31,7 @@ func main() {
 
 	log.Printf("Listening on %v", listener.Addr())
 
+	// 接收所有请求
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
