@@ -2,8 +2,8 @@ package main
 
 import (
 	"golang.org/x/crypto/ssh"
-	"log"
 
+	"log"
 	"net"
 	"sync"
 )
@@ -24,8 +24,9 @@ var channelHandlers = map[string]func(newChannel ssh.NewChannel, context channel
 	"direct-tcpip": handleDirectTCPIPChannel,
 }
 
+// 连接操作
 func handleConnection(conn net.Conn, cfg *config) {
-	serverConn, newChannels, requests, err := ssh.NewServerConn(conn, cfg.sshConfig)
+	serverConn, newChannels, requests, err := ssh.NewServerConn(conn, cfg.sshConfig) //必须为Request和NewChannel通道提供服务
 	if err != nil {
 		log.Printf("Failed to establish SSH connection: %v", err)
 		conn.Close()

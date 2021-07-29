@@ -22,7 +22,7 @@ func main() {
 		log.Fatalf("Failed to get config: %v", err)
 	}
 
-	// -- 监听
+	// 监听端口
 	listener, err := net.Listen("tcp", cfg.Server.ListenAddress)
 	if err != nil {
 		log.Fatalf("Failed to listen for connections: %v", err)
@@ -37,6 +37,7 @@ func main() {
 			log.Printf("Failed to accept connection: %v", err)
 			continue
 		}
+		// 设置连接操作
 		go handleConnection(conn, cfg)
 	}
 }

@@ -14,7 +14,7 @@ func (cfg *config) getPasswordCallback() func(conn ssh.ConnMetadata, password []
 		return nil
 	}
 	return func(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
-		log.Printf("New conncetion(src/dst): %s (%s)\n", conn.LocalAddr().String(), conn.RemoteAddr().String())
+		log.Printf("New conncetion(src/dst): %s (%s)\n", conn.RemoteAddr().String(), conn.LocalAddr().String())
 		log.Printf("Authentication for ['%s','%s'] is accept\n", conn.User(), string(password))
 		return nil, nil
 	}

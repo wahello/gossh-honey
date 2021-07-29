@@ -55,7 +55,6 @@ type config struct {
 
 	parsedHostKeys []ssh.Signer // 存放解析后的主机密钥
 	sshConfig      *ssh.ServerConfig
-	//logFileHandle  io.WriteCloser
 }
 
 // 1.默认配置文件
@@ -138,15 +137,6 @@ func (cfg *config) setupSSHConfig() error {
 	return nil
 }
 
-// 加载密钥
-func loadKey(keyFile string) (ssh.Signer, error) {
-	keyBytes, err := ioutil.ReadFile(keyFile)
-	if err != nil {
-		return nil, err
-	}
-	return ssh.ParsePrivateKey(keyBytes)
-}
-
 // 3.1解析密钥
 func (cfg *config) parseHostKeys() error {
 	for _, keyFile := range cfg.Server.HostKeys {
@@ -157,4 +147,13 @@ func (cfg *config) parseHostKeys() error {
 		cfg.parsedHostKeys = append(cfg.parsedHostKeys, signer)
 	}
 	return nil
+}
+
+// 3.2加载密钥
+func loadKey(keyFile string) (ssh.Signer, error) {
+	keyBytes, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		return nil, err
+	}
+	return ssh.ParsePrivateKey(keyBytes)
 }
