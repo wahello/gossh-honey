@@ -5,16 +5,13 @@ logging:
   file: null 
   json: false 
   timestamps: true 
-  debug: false 
+  debug: false
 auth:
-  no_auth: false 
-  max_tries: 0 
+  no_auth: false
+  max_tries: 0
   password_auth:
-    enabled: true 
-    accepted: true 
-  public_key_auth:
-    enabled: true 
-    accepted: false
+    enabled: true
+    accepted: true
 ssh_proto:
   version: SSH-2.0-gossh-honey
   banner: A simple ssh honey pot, fake ssh server that lets anyone to connect and monitor their activty

@@ -2,6 +2,7 @@ package main
 
 import (
 	"golang.org/x/crypto/ssh"
+	"log"
 
 	"net"
 	"sync"
@@ -26,7 +27,7 @@ var channelHandlers = map[string]func(newChannel ssh.NewChannel, context channel
 func handleConnection(conn net.Conn, cfg *config) {
 	serverConn, newChannels, requests, err := ssh.NewServerConn(conn, cfg.sshConfig)
 	if err != nil {
-		warningLogger.Printf("Failed to establish SSH connection: %v", err)
+		log.Printf("Failed to establish SSH connection: %v", err)
 		conn.Close()
 		return
 	}
@@ -43,7 +44,7 @@ func handleConnection(conn net.Conn, cfg *config) {
 	})
 
 	if _, _, err := serverConn.SendRequest("hostkeys-00@openssh.com", false, createHostkeysRequestPayload(cfg.parsedHostKeys)); err != nil {
-		warningLogger.Printf("Failed to send hostkeys-00@openssh.com request: %v", err)
+		log.Printf("Failed to send hostkeys-00@openssh.com request: %v", err)
 		return
 	}
 
@@ -61,7 +62,7 @@ func handleConnection(conn net.Conn, cfg *config) {
 				Payload:     string(request.Payload),
 			})
 			if err := handleGlobalRequest(request, &context); err != nil {
-				warningLogger.Printf("Failed to handle global request: %v", err)
+				log.Printf("Failed to handle global request: %v", err)
 				requests = nil
 				continue
 			}
@@ -78,9 +79,9 @@ func handleConnection(conn net.Conn, cfg *config) {
 			channelType := newChannel.ChannelType()
 			handler := channelHandlers[channelType]
 			if handler == nil {
-				warningLogger.Printf("Unsupported channel type %v", channelType)
+				log.Printf("Unsupported channel type %v", channelType)
 				if err := newChannel.Reject(ssh.ConnectionFailed, "open failed"); err != nil {
-					warningLogger.Printf("Failed to reject channel: %v", err)
+					log.Printf("Failed to reject channel: %v", err)
 					newChannels = nil
 					continue
 				}
@@ -90,7 +91,7 @@ func handleConnection(conn net.Conn, cfg *config) {
 			go func(context channelContext) {
 				defer channels.Done()
 				if err := handler(newChannel, context); err != nil {
-					warningLogger.Printf("Failed to handle new channel: %v", err)
+					log.Printf("Failed to handle new channel: %v", err)
 					serverConn.Close()
 				}
 			}(channelContext{context, channelID})

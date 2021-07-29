@@ -4,6 +4,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"errors"
+	"log"
 	"math/rand"
 	"net"
 	"strconv"
@@ -90,7 +91,7 @@ var globalRequestPayloads = map[string]globalRequestPayloadParser{
 func handleGlobalRequest(request *ssh.Request, context *connContext) error {
 	parser := globalRequestPayloads[request.Type]
 	if parser == nil {
-		warningLogger.Printf("Unsupported global request type %v", request.Type)
+		log.Printf("Unsupported global request type %v", request.Type)
 		if request.WantReply {
 			if err := request.Reply(false, nil); err != nil {
 				return err

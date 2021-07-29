@@ -2,6 +2,7 @@ package main
 
 import (
 	"golang.org/x/crypto/ssh"
+	"log"
 
 	"bufio"
 	"io"
@@ -33,7 +34,7 @@ func handleDirectTCPIPChannel(newChannel ssh.NewChannel, context channelContext)
 	}
 	server := servers[channelData.Port]
 	if server == nil {
-		warningLogger.Printf("Unsupported port %v", channelData.Port)
+		log.Printf("Unsupported port %v", channelData.Port)
 		return newChannel.Reject(ssh.ConnectionFailed, "Connection refused")
 	}
 	channel, requests, err := newChannel.Accept()
@@ -93,7 +94,7 @@ func handleDirectTCPIPChannel(newChannel ssh.NewChannel, context channelContext)
 				WantReply:   request.WantReply,
 				Payload:     string(request.Payload),
 			})
-			warningLogger.Printf("Unsupported direct-tcpip request type %v", request.Type)
+			log.Printf("Unsupported direct-tcpip request type %v", request.Type)
 			if request.WantReply {
 				if err := request.Reply(false, nil); err != nil {
 					return err

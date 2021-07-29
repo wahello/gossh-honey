@@ -13,57 +13,6 @@ type logEntry interface {
 	eventType() string
 }
 
-type authAccepted bool
-
-func (accepted authAccepted) String() string {
-	if accepted {
-		return "accepted"
-	}
-	return "rejected"
-}
-
-type authLog struct {
-	User     string       `json:"user"`
-	Accepted authAccepted `json:"accepted"`
-}
-
-type passwordAuthLog struct {
-	authLog
-	Password string `json:"password"`
-}
-
-// 密码认证日志输出 authentication for user "root" with password "test" accepted
-func (entry passwordAuthLog) String() string {
-	return fmt.Sprintf("authentication for user %q with password %q %v", entry.User, entry.Password, entry.Accepted)
-}
-func (entry passwordAuthLog) eventType() string {
-	return "password_auth"
-}
-
-type publicKeyAuthLog struct {
-	authLog
-	PublicKeyFingerprint string `json:"public_key"`
-}
-
-func (entry publicKeyAuthLog) String() string {
-	return fmt.Sprintf("authentication for user %q with public key %q %v", entry.User, entry.PublicKeyFingerprint, entry.Accepted)
-}
-func (entry publicKeyAuthLog) eventType() string {
-	return "public_key_auth"
-}
-
-type keyboardInteractiveAuthLog struct {
-	authLog
-	Answers []string `json:"answers"`
-}
-
-func (entry keyboardInteractiveAuthLog) String() string {
-	return fmt.Sprintf("authentication for user %q with keyboard interactive answers %q %v", entry.User, entry.Answers, entry.Accepted)
-}
-func (entry keyboardInteractiveAuthLog) eventType() string {
-	return "keyboard_interactive_auth"
-}
-
 type connectionLog struct {
 	ClientVersion string `json:"client_version"`
 }
@@ -125,6 +74,7 @@ type sessionLog struct {
 	channelLog
 }
 
+// session 请求
 func (entry sessionLog) String() string {
 	return fmt.Sprintf("[channel %v] session requested", entry.ChannelID)
 }
@@ -198,6 +148,7 @@ type ptyLog struct {
 	Height   uint32 `json:"height"`
 }
 
+// ptyLog
 func (entry ptyLog) String() string {
 	return fmt.Sprintf("[channel %v] PTY using terminal %q (size %vx%v) requested", entry.ChannelID, entry.Terminal, entry.Width, entry.Height)
 }
@@ -209,6 +160,7 @@ type shellLog struct {
 	channelLog
 }
 
+// shell request
 func (entry shellLog) String() string {
 	return fmt.Sprintf("[channel %v] shell requested", entry.ChannelID)
 }
@@ -287,7 +239,7 @@ type debugGlobalRequestLog struct {
 func (entry debugGlobalRequestLog) String() string {
 	jsonBytes, err := json.Marshal(entry)
 	if err != nil {
-		warningLogger.Printf("Failed to log event: %v", err)
+		log.Printf("Failed to log event: %v", err)
 		return ""
 	}
 	return fmt.Sprintf("DEBUG global request received: %v\n", string(jsonBytes))
@@ -305,7 +257,7 @@ type debugChannelLog struct {
 func (entry debugChannelLog) String() string {
 	jsonBytes, err := json.Marshal(entry)
 	if err != nil {
-		warningLogger.Printf("Failed to log event: %v", err)
+		log.Printf("Failed to log event: %v", err)
 		return ""
 	}
 	return fmt.Sprintf("DEBUG new channel requested: %v\n", string(jsonBytes))
@@ -324,7 +276,7 @@ type debugChannelRequestLog struct {
 func (entry debugChannelRequestLog) String() string {
 	jsonBytes, err := json.Marshal(entry)
 	if err != nil {
-		warningLogger.Printf("Failed to log event: %v", err)
+		log.Printf("Failed to log event: %v", err)
 		return ""
 	}
 	return fmt.Sprintf("DEBUG channel request received: %v\n", string(jsonBytes))
@@ -355,7 +307,7 @@ func (context connContext) logEvent(entry logEntry) {
 		}
 		logBytes, err := json.Marshal(jsonEntry)
 		if err != nil {
-			warningLogger.Printf("Failed to log event: %v", err)
+			log.Printf("Failed to log event: %v", err)
 			return
 		}
 		log.Print(string(logBytes))

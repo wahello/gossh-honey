@@ -3,6 +3,7 @@ package main
 import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
+	"log"
 
 	"bufio"
 	"errors"
@@ -218,7 +219,7 @@ func (r terminalReadLiner) ReadLine() (string, error) {
 
 func (channel *sessionContext) handleProgram(program []string) bool {
 	if channel.active {
-		warningLogger.Printf("A program is already active")
+		log.Printf("A program is already active")
 		return false
 	}
 	channel.active = true
@@ -350,7 +351,7 @@ func handleSessionChannel(newChannel ssh.NewChannel, context channelContext) err
 			})
 			parser := sessionRequestParsers[request.Type]
 			if parser == nil {
-				warningLogger.Printf("Unsupported session request type %v", request.Type)
+				log.Printf("Unsupported session request type %v", request.Type)
 				if request.WantReply {
 					if err := request.Reply(false, nil); err != nil {
 						return err
