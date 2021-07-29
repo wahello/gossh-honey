@@ -16,9 +16,15 @@
 ## 使用方法
 
 ```
+#下载
 git clone https://github.com/zmk-c/gossh-honey.git
+
+#server端操作
 cd gossh-honey/
 go build
 ./gossh-honey
+
+#client端使用ssh进行连接
+example: ssh -p 2222 root@localhost
 ```
 
